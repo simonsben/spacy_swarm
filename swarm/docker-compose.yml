@@ -2,14 +2,9 @@ version: "3"
 services:
   spacy:
     image: jgontrum/spacyapi:en_v2
+    restart: always
     deploy:
       replicas: 5
-      resources:
-        limits:
-          cpus: "2"
-          memory: 1G
-      restart_policy:
-        condition: on-failure
     ports:
       - "8080:80"
     networks:

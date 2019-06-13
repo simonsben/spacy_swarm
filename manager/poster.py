@@ -1,17 +1,17 @@
 from asyncio import gather, get_event_loop
 from aiohttp import ClientSession
-from utilities import load_config
-from json import dumps, loads
+from manager.utilities import load_config
+from json import dumps, loads, JSONDecodeError
 
 endpoint = load_config()['endpoint']
 
 
-def process_documents(documents):
+def process_documents(documents, job_loop=None):
     """ Run jobs synchronously """
-    job_loop = get_event_loop()
-    try:
-        response = job_loop.run_until_complete(submit_jobs(documents))
-    finally:
+    job_loop = get_event_loop() if job_loop is None else job_loop
+    response = job_loop.run_until_complete(submit_jobs(documents))
+
+    if job_loop is None:
         job_loop.close()
 
     return response
@@ -25,8 +25,9 @@ async def submit_jobs(documents):
             jobs.append(
                 make_post(session, document)
             )
+        result = await gather(*jobs)
 
-        return await gather(*jobs)
+    return result
 
 
 async def make_post(session, document):
@@ -38,6 +39,11 @@ async def make_post(session, document):
 
     async with session.post(endpoint, data=req_data) as response:
         res_data = await response.text()
-        res = loads(res_data)
+
+        try:
+            res = loads(res_data)
+        except JSONDecodeError:
+            return []
 
     return res['arcs']
+
