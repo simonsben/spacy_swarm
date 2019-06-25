@@ -4,7 +4,7 @@ from pathlib import Path
 
 def load_config():
     """ Load config info from JSON file """
-    path = Path('config.json')
+    path = Path('../config.json')
     if not path.exists():
         raise FileNotFoundError('Config file not found!')
 
